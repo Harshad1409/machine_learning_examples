@@ -44,8 +44,8 @@ def predict(P_Y_given_X):
 def classification_rate(Y, P):
     return np.mean(Y == P)
 
-def cross_entropy(T, pY):
-    return -np.mean(T*np.log(pY))
+def cross_entropy(Y, pY):
+    return -np.sum(Y * np.log(pY)) / len(Y)
 
 
 # train loop
@@ -70,7 +70,7 @@ for i in range(10000):
 print("Final train classification_rate:", classification_rate(Ytrain, predict(pYtrain)))
 print("Final test classification_rate:", classification_rate(Ytest, predict(pYtest)))
 
-legend1, = plt.plot(train_costs, label='train cost')
-legend2, = plt.plot(test_costs, label='test cost')
-plt.legend([legend1, legend2])
+plt.plot(train_costs, label='train cost')
+plt.plot(test_costs, label='test cost')
+plt.legend()
 plt.show()

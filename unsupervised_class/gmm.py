@@ -25,7 +25,7 @@ def gmm(X, K, max_iter=20, smoothing=1e-2):
         M[k] = X[np.random.choice(N)]
         C[k] = np.eye(D)
 
-    costs = np.zeros(max_iter)
+    lls = []
     weighted_pdfs = np.zeros((N, K)) # we'll use these to store the PDF value of sample n and Gaussian k
     for i in range(max_iter):
         # step 1: determine assignments / resposibilities
@@ -48,16 +48,23 @@ def gmm(X, K, max_iter=20, smoothing=1e-2):
             Nk = R[:,k].sum()
             pi[k] = Nk / N
             M[k] = R[:,k].dot(X) / Nk
-            C[k] = np.sum(R[n,k]*np.outer(X[n] - M[k], X[n] - M[k]) for n in range(N)) / Nk + np.eye(D)*smoothing
+
+            ## faster
+            delta = X - M[k] # N x D
+            Rdelta = np.expand_dims(R[:,k], -1) * delta # multiplies R[:,k] by each col. of delta - N x D
+            C[k] = Rdelta.T.dot(delta) / Nk + np.eye(D)*smoothing # D x D
+            ## slower
+            # C[k] = np.sum(R[n,k]*np.outer(X[n] - M[k], X[n] - M[k]) for n in range(N)) / Nk + np.eye(D)*smoothing
 
 
-        costs[i] = np.log(weighted_pdfs.sum(axis=1)).sum()
+        ll = np.log(weighted_pdfs.sum(axis=1)).sum()
+        lls.append(ll)
         if i > 0:
-            if np.abs(costs[i] - costs[i-1]) < 0.1:
+            if np.abs(lls[i] - lls[i-1]) < 0.1:
                 break
 
-    plt.plot(costs)
-    plt.title("Costs")
+    plt.plot(lls)
+    plt.title("Log-Likelihood")
     plt.show()
 
     random_colors = np.random.random((K, 3))

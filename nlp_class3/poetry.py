@@ -17,6 +17,14 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.optimizers import Adam, SGD
 
+try:
+  import keras.backend as K
+  if len(K.tensorflow_backend._get_available_gpus()) > 0:
+    from keras.layers import CuDNNLSTM as LSTM
+    from keras.layers import CuDNNGRU as GRU
+except:
+  pass
+
 
 # some configuration
 MAX_SEQUENCE_LENGTH = 100
@@ -155,8 +163,8 @@ plt.legend()
 plt.show()
 
 # accuracies
-plt.plot(r.history['acc'], label='acc')
-plt.plot(r.history['val_acc'], label='val_acc')
+plt.plot(r.history['accuracy'], label='acc')
+plt.plot(r.history['val_accuracy'], label='val_acc')
 plt.legend()
 plt.show()
 

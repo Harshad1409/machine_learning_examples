@@ -1,6 +1,7 @@
 # https://deeplearningcourses.com/c/machine-learning-in-python-random-forest-adaboost
 # https://www.udemy.com/machine-learning-in-python-random-forest-adaboost
 # uses house dataset from https://archive.ics.uci.edu/ml/machine-learning-databases/housing/
+# Alternate data source: https://archive.org/download/housing_202405/housing.data
 # put all files in the folder ../large_files
 from __future__ import print_function, division
 from future.utils import iteritems
@@ -44,7 +45,7 @@ class DataTransformer:
     self.scalers = {}
     for col in NUMERICAL_COLS:
       scaler = StandardScaler()
-      scaler.fit(df[col].as_matrix().reshape(-1, 1))
+      scaler.fit(df[col].values.reshape(-1, 1))
       self.scalers[col] = scaler
 
   def transform(self, df):
@@ -53,7 +54,7 @@ class DataTransformer:
     X = np.zeros((N, D))
     i = 0
     for col, scaler in iteritems(self.scalers):
-      X[:,i] = scaler.transform(df[col].as_matrix().reshape(-1, 1)).flatten()
+      X[:,i] = scaler.transform(df[col].values.reshape(-1, 1)).flatten()
       i += 1
     for col in NO_TRANSFORM:
       X[:,i] = df[col]
@@ -66,8 +67,7 @@ class DataTransformer:
 
 
 def get_data():
-  # regex allows arbitrary number of spaces in separator
-  df = pd.read_csv('../large_files/housing.data', header=None, sep=r"\s*", engine='python')
+  df = pd.read_csv('housing.data', header=None, delim_whitespace=True)
   df.columns = [
     'crim', # numerical
     'zn', # numerical
@@ -96,9 +96,9 @@ def get_data():
   df_test = df.loc[test_idx]
 
   Xtrain = transformer.fit_transform(df_train)
-  Ytrain = np.log(df_train['medv'].as_matrix())
+  Ytrain = np.log(df_train['medv'].values)
   Xtest = transformer.transform(df_test)
-  Ytest = np.log(df_test['medv'].as_matrix())
+  Ytest = np.log(df_test['medv'].values)
   return Xtrain, Ytrain, Xtest, Ytest
 
 
@@ -128,9 +128,9 @@ if __name__ == '__main__':
   # do a quick baseline test
   baseline = LinearRegression()
   single_tree = DecisionTreeRegressor()
-  print("CV single tree:", cross_val_score(single_tree, Xtrain, Ytrain).mean())
-  print("CV baseline:", cross_val_score(baseline, Xtrain, Ytrain).mean())
-  print("CV forest:", cross_val_score(model, Xtrain, Ytrain).mean())
+  print("CV single tree:", cross_val_score(single_tree, Xtrain, Ytrain, cv=5).mean())
+  print("CV baseline:", cross_val_score(baseline, Xtrain, Ytrain, cv=5).mean())
+  print("CV forest:", cross_val_score(model, Xtrain, Ytrain, cv=5).mean())
 
   # test score
   single_tree.fit(Xtrain, Ytrain)

@@ -15,6 +15,17 @@ from gym import wrappers
 from datetime import datetime
 from q_learning_bins import plot_running_avg
 
+gym_minor_version = int(gym.__version__.split('.')[1])
+if gym_minor_version >= 19:
+  exit("Please install OpenAI Gym 0.19.0 or earlier")
+
+if tf.__version__.startswith('2'):
+  exit("Please install Tensorflow 1.x")
+
+
+# global counter
+global_iters = 0
+
 
 # a version of HiddenLayer that keeps track of params
 class HiddenLayer:
@@ -154,6 +165,7 @@ class DQN:
 
 
 def play_one(env, model, tmodel, eps, gamma, copy_period):
+  global global_iters
   observation = env.reset()
   done = False
   totalreward = 0
@@ -174,8 +186,9 @@ def play_one(env, model, tmodel, eps, gamma, copy_period):
     model.train(tmodel)
 
     iters += 1
+    global_iters += 1
 
-    if iters % copy_period == 0:
+    if global_iters % copy_period == 0:
       tmodel.copy_from(model)
 
   return totalreward

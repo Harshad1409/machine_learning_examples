@@ -11,9 +11,29 @@ import requests
 import zipfile
 import numpy as np
 import pandas as pd
-from scipy.misc import imread, imsave, imresize
+
+try:
+  # new version doesn't support
+  from scipy.misc import imread, imsave, imresize
+except:
+  from PIL import Image
+  def imread(fn):
+    im = Image.open(fn)
+    return np.array(im)
+
+  def imsave(fn, arr):
+    im = Image.fromarray(arr)
+    im.save(fn)
+
+  def imresize(arr, sz):
+    im = Image.fromarray(arr)
+    im.resize(sz)
+    return np.array(im)
+
+
 from glob import glob
 from tqdm import tqdm
+from sklearn.utils import shuffle
 
 
 def get_mnist(limit=None):
@@ -26,10 +46,11 @@ def get_mnist(limit=None):
 
   print("Reading in and transforming data...")
   df = pd.read_csv('../large_files/train.csv')
-  data = df.as_matrix()
-  np.random.shuffle(data)
+  data = df.values
+  # np.random.shuffle(data)
   X = data[:, 1:] / 255.0 # data is from 0..255
   Y = data[:, 0]
+  X, Y = shuffle(X, Y)
   if limit is not None:
     X, Y = X[:limit], Y[:limit]
   return X, Y

@@ -8,74 +8,74 @@ from builtins import range
 
 import numpy as np
 import matplotlib.pyplot as plt
-from comparing_epsilons import run_experiment as run_experiment_eps
+
+
+NUM_TRIALS = 100000
+EPS = 0.1
+BANDIT_PROBABILITIES = [0.2, 0.5, 0.75]
 
 
 class Bandit:
-  def __init__(self, m):
-    self.m = m
-    self.mean = 0
-    self.N = 0
+  def __init__(self, p):
+    # p: the win rate
+    self.p = p
+    self.p_estimate = 0.
+    self.N = 0. # num samples collected so far
 
   def pull(self):
-    return np.random.randn() + self.m
+    # draw a 1 with probability p
+    return np.random.random() < self.p
 
   def update(self, x):
-    self.N += 1
-    self.mean = (1 - 1.0/self.N)*self.mean + 1.0/self.N*x
+    self.N += 1.
+    self.p_estimate = ((self.N - 1)*self.p_estimate + x) / self.N
 
 
 def ucb(mean, n, nj):
-  if nj == 0:
-    return float('inf')
   return mean + np.sqrt(2*np.log(n) / nj)
 
 
-def run_experiment(m1, m2, m3, N):
-  bandits = [Bandit(m1), Bandit(m2), Bandit(m3)]
+def run_experiment():
+  bandits = [Bandit(p) for p in BANDIT_PROBABILITIES]
+  rewards = np.empty(NUM_TRIALS)
+  total_plays = 0
 
-  data = np.empty(N)
-  
-  for i in range(N):
-    j = np.argmax([ucb(b.mean, i+1, b.N) for b in bandits])
+  # initialization: play each bandit once
+  for j in range(len(bandits)):
     x = bandits[j].pull()
+    total_plays += 1
+    bandits[j].update(x)
+  
+  for i in range(NUM_TRIALS):
+    j = np.argmax([ucb(b.p_estimate, total_plays, b.N) for b in bandits])
+    x = bandits[j].pull()
+    total_plays += 1
     bandits[j].update(x)
 
     # for the plot
-    data[i] = x
-  cumulative_average = np.cumsum(data) / (np.arange(N) + 1)
-
-  # for b in bandits:
-  #   print("bandit nj:", b.N)
+    rewards[i] = x
+  cumulative_average = np.cumsum(rewards) / (np.arange(NUM_TRIALS) + 1)
 
   # plot moving average ctr
   plt.plot(cumulative_average)
-  plt.plot(np.ones(N)*m1)
-  plt.plot(np.ones(N)*m2)
-  plt.plot(np.ones(N)*m3)
+  plt.plot(np.ones(NUM_TRIALS)*np.max(BANDIT_PROBABILITIES))
   plt.xscale('log')
   plt.show()
 
-  # for b in bandits:
-  #   print(b.mean)
+  # plot moving average ctr linear
+  plt.plot(cumulative_average)
+  plt.plot(np.ones(NUM_TRIALS)*np.max(BANDIT_PROBABILITIES))
+  plt.show()
+
+  for b in bandits:
+    print(b.p_estimate)
+
+  print("total reward earned:", rewards.sum())
+  print("overall win rate:", rewards.sum() / NUM_TRIALS)
+  print("num times selected each bandit:", [b.N for b in bandits])
 
   return cumulative_average
 
 if __name__ == '__main__':
-  eps = run_experiment_eps(1.0, 2.0, 3.0, 0.1, 100000)
-  ucb = run_experiment(1.0, 2.0, 3.0, 100000)
-
-  # log scale plot
-  plt.plot(eps, label='eps = 0.1')
-  plt.plot(ucb, label='ucb1')
-  plt.legend()
-  plt.xscale('log')
-  plt.show()
-
-
-  # linear plot
-  plt.plot(eps, label='eps = 0.1')
-  plt.plot(ucb, label='ucb1')
-  plt.legend()
-  plt.show()
+  run_experiment()
 

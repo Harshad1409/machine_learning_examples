@@ -19,6 +19,7 @@ from sklearn.metrics import roc_auc_score
 
 # Download the data:
 # https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge
+# https://lazyprogrammer.me/course_files/toxic_comment_train.csv
 # Download the word vectors:
 # http://nlp.stanford.edu/data/glove.6B.zip
 
@@ -56,12 +57,6 @@ sentences = train["comment_text"].fillna("DUMMY_VALUE").values
 possible_labels = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
 targets = train[possible_labels].values
 
-print("max sequence length:", max(len(s) for s in sentences))
-print("min sequence length:", min(len(s) for s in sentences))
-s = sorted(len(s) for s in sentences)
-print("median sequence length:", s[len(s) // 2])
-
-
 
 
 # convert the sentences (strings) into integers
@@ -71,9 +66,19 @@ sequences = tokenizer.texts_to_sequences(sentences)
 # print("sequences:", sequences); exit()
 
 
+print("max sequence length:", max(len(s) for s in sequences))
+print("min sequence length:", min(len(s) for s in sequences))
+s = sorted(len(s) for s in sequences)
+print("median sequence length:", s[len(s) // 2])
+
+print("max word index:", max(max(seq) for seq in sequences if len(seq) > 0))
+
+
 # get word -> integer mapping
 word2idx = tokenizer.word_index
 print('Found %s unique tokens.' % len(word2idx))
+
+# exit()
 
 
 # pad sequences so that we get a N x T matrix
@@ -144,8 +149,8 @@ plt.legend()
 plt.show()
 
 # accuracies
-plt.plot(r.history['acc'], label='acc')
-plt.plot(r.history['val_acc'], label='val_acc')
+plt.plot(r.history['accuracy'], label='acc')
+plt.plot(r.history['val_accuracy'], label='val_acc')
 plt.legend()
 plt.show()
 

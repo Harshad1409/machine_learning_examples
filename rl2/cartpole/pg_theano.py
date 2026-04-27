@@ -17,6 +17,10 @@ from gym import wrappers
 from datetime import datetime
 from q_learning_bins import plot_running_avg
 
+gym_minor_version = int(gym.__version__.split('.')[1])
+if gym_minor_version >= 19:
+  exit("Please install OpenAI Gym 0.19.0 or earlier")
+
 
 # so you can test different architectures
 class HiddenLayer:
@@ -169,34 +173,34 @@ class ValueModel:
     return self.predict_op(X)
 
 
-# def play_one_td(env, pmodel, vmodel, gamma):
-#   observation = env.reset()
-#   done = False
-#   totalreward = 0
-#   iters = 0
+def play_one_td(env, pmodel, vmodel, gamma):
+  observation = env.reset()
+  done = False
+  totalreward = 0
+  iters = 0
 
-#   while not done and iters < 2000:
-#     # if we reach 2000, just quit, don't want this going forever
-#     # the 200 limit seems a bit early
-#     action = pmodel.sample_action(observation)
-#     prev_observation = observation
-#     observation, reward, done, info = env.step(action)
+  while not done and iters < 2000:
+    # if we reach 2000, just quit, don't want this going forever
+    # the 200 limit seems a bit early
+    action = pmodel.sample_action(observation)
+    prev_observation = observation
+    observation, reward, done, info = env.step(action)
 
-#     if done:
-#       reward = -200
+    if done:
+      reward = -200
 
-#     # update the models
-#     V_next = vmodel.predict(observation)
-#     G = reward + gamma*np.max(V_next)
-#     advantage = G - vmodel.predict(prev_observation)
-#     pmodel.partial_fit(prev_observation, action, advantage)
-#     vmodel.partial_fit(prev_observation, G)
+    # update the models
+    V_next = vmodel.predict(observation)
+    G = reward + gamma*np.max(V_next)
+    advantage = G - vmodel.predict(prev_observation)
+    pmodel.partial_fit(prev_observation, action, advantage)
+    vmodel.partial_fit(prev_observation, G)
 
-#     if reward == 1: # if we changed the reward to -200
-#       totalreward += reward
-#     iters += 1
+    if reward == 1: # if we changed the reward to -200
+      totalreward += reward
+    iters += 1
 
-#   return totalreward
+  return totalreward
 
 
 def play_one_mc(env, pmodel, vmodel, gamma):
